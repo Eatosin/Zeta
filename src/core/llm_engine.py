@@ -52,13 +52,31 @@ class LLMEngine:
         logger.debug("Constructing prompt from configuration...")
         
         try:
-            # Construct prompt from YAML templates
+            # Load config sections
             config = self.prompts["test_generation"]
-            system_role = config["system_role"]
-            instruction = config["instruction"].format(requirements_text=requirements_text[:30000])
-            fmt = config["output_format"]
             
-            full_prompt = f"{system_role}\n\n{instruction}\n\nOUTPUT FORMAT:\n{fmt}"
+            # 1. System Role & Context
+            system_role = config.get("system_role", "")
+            
+            # 2. Main Instruction (Injecting the dynamic text)
+            instruction = config.get("instruction", "").format(
+                requirements_text=requirements_text[:30000]
+            )
+            
+            # 3. Few-Shot Examples (NEW: Capturing your expanded section)
+            examples = config.get("few_shot_examples", "")
+            
+            # 4. Output Schema
+            fmt = config.get("output_format", "")
+            
+            # Construct the Full Context Window
+            # Order matters: Role -> Task -> Examples -> Strict JSON Format
+            full_prompt = (
+                f"{system_role}\n\n"
+                f"{instruction}\n\n"
+                f"### REFERENCE EXAMPLES:\n{examples}\n\n"
+                f"### REQUIRED OUTPUT FORMAT:\n{fmt}"
+            )
 
             # Async call
             response = await self.model.generate_content_async(full_prompt)
