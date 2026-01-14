@@ -1,24 +1,32 @@
-# 1. Use Python 3.11 Slim (Lightweight)
+# 1. Base Image
 FROM python:3.11-slim
 
-# 2. Set Working Directory
+# 2. System Setup
 WORKDIR /app
-
-# 3. Install System Dependencies (Needed for Scikit-Learn/Pandas build)
 RUN apt-get update && apt-get install -y \
     build-essential \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 4. Install Python Dependencies
+# 3. Install Python Dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 5. Copy the Application Code
+# 4. Copy Code
 COPY . .
 
-# 6. Expose Ports (8000 for API, 8501 for UI)
-EXPOSE 8000
-EXPOSE 8501
+# 5. Set Environment Variables
+ENV PYTHONPATH=/app
+ENV API_URL="http://localhost:8000" 
+# ^ This tells Streamlit to look for the API inside the container
 
-# 7. Default Command (Starts the API)
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 6. Create Non-Root User
+RUN useradd -m -u 1000 user
+USER user
+ENV PATH="/home/user/.local/bin:$PATH"
+
+# 7. THE DUAL LAUNCH COMMAND
+# We use a shell script to launch Uvicorn (API) in the background (&) 
+# and Streamlit (UI) in the foreground.
+CMD uvicorn src.api.main:app --host 0.0.0.0 --port 8000 & \
+    streamlit run streamlit_app/app.py --server.port 7860 --server.address 0.0.0.0
