@@ -1,12 +1,11 @@
 import streamlit as st
 import requests
 import pandas as pd
-import json
 import os
 from dotenv import load_dotenv
 import altair as alt
 
-# Load Env.
+# Load Env
 load_dotenv()
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
@@ -56,7 +55,7 @@ with tab1:
             if len(req_text) < 10:
                 st.error("Requirements too short.")
             else:
-                with st.spinner("🤖 Gemini is architecting test plan + ML calculating Z-Scores..."):
+                with st.spinner("🤖 Gemini is thinking + ML is calculating Z-Scores..."):
                     try:
                         resp = requests.post(f"{API_URL}/generate", json={"requirements_text": req_text})
                         if resp.status_code == 200:
@@ -73,7 +72,7 @@ with tab1:
             health = requests.get(f"{API_URL}/health", timeout=1).json()
             st.write(f"**API Backend:** 🟢 Online ({health.get('status')})")
             st.write(f"**Engines Loaded:** {', '.join(health.get('engines_loaded', []))}")
-        except:
+        except Exception:
             st.write("**API Backend:** 🔴 Offline (Check Docker)")
 
 # --- TAB 2: VIEW TEST CASES ---
@@ -123,7 +122,7 @@ with tab3:
                         st.download_button("Download .py", code, f"test_{tc['id']}.py")
                     else:
                         st.error("Codegen Failed")
-                except:
+                except Exception:
                     st.error("API Error")
     else:
         st.info("Select a test case from Tab 2 to generate code.")
