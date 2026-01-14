@@ -8,3 +8,5 @@ tenacity>=8.2.3  # Critical for Retries
 aiofiles>=23.2.1 # Critical for Async File I/O
 loguru>=0.7.2    # SOTA Logging
 python-dotenv>=1.0.0
+pytest
+pytest-asyncio
