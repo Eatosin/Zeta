@@ -10,6 +10,8 @@ loguru>=0.7.2    # SOTA Logging
 python-dotenv>=1.0.0
 pytest
 pytest-asyncio
+jinja2
+black
 scikit-learn
 pandas
 numpy
