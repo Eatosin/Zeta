@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from src.core.llm_engine import LLMEngine
@@ -10,25 +10,23 @@ import uuid
 import os
 from loguru import logger
 
-# --- LIFESPAN MANAGER (2026 Best Practice) ---
-# We load heavy ML models only when the server starts, not on import.
+# --- LIFESPAN MANAGER ---
 ml_resources = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("⚡ System Startup: Loading AI Engines...")
+    logger.info(" System Startup: Loading AI Engines...")
     try:
         ml_resources["llm"] = LLMEngine()
         ml_resources["ml"] = EdgeCaseDetector()
         ml_resources["codegen"] = SeleniumGenerator()
-        logger.info("✅ Engines Online.")
+        logger.info(" Engines Online.")
     except Exception as e:
-        logger.critical(f"❌ Engine Startup Failed: {e}")
+        logger.critical(f" Engine Startup Failed: {e}")
         raise e
     yield
-    # Cleanup code could go here
     ml_resources.clear()
-    logger.info("🛑 System Shutdown.")
+    logger.info(" System Shutdown.")
 
 # --- APP CONFIG ---
 app = FastAPI(
@@ -40,7 +38,7 @@ app = FastAPI(
 # Security: CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, lock this to the Streamlit URL
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -65,9 +63,7 @@ async def generate_tests(request: GenerateRequest):
         raw_tests = await ml_resources["llm"].generate_test_cases(request.requirements_text)
         
         # 2. Apply Physics/ML Analysis
-        # Map fields for the detector
         for test in raw_tests:
-            # Create synthetic text field for analysis if missing
             if "text" not in test:
                 test["text"] = f"{test.get('title', '')} {' '.join(test.get('steps', []))}"
             
@@ -99,6 +95,5 @@ async def generate_code(request: CodeGenRequest):
         raise HTTPException(status_code=500, detail="Code generation failed")
 
 if __name__ == "__main__":
-    # Robust port handling for Cloud
     port = int(os.getenv("PORT", 8000))
     uvicorn.run("src.api.main:app", host="0.0.0.0", port=port, reload=True)
