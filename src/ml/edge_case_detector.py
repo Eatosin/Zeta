@@ -2,9 +2,9 @@ import numpy as np
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from sklearn.ensemble import IsolationForest
-from typing import List, Dict, Any
+from typing import List, Dict
 from loguru import logger
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from src.ml.anomaly_detection import AnomalyDetector
 
 # --- DATA MODELS ---
@@ -25,7 +25,7 @@ class EdgeCaseDetector:
     def __init__(self, contamination: float = 0.1):
         self.ml_model = IsolationForest(contamination=contamination, random_state=42)
         self.physics_engine = AnomalyDetector(threshold=2.5)
-        self.executor = ThreadPoolExecutor(max_workers=4) # Prevent CPU blocking
+        self.executor = ThreadPoolExecutor(max_workers=4)  # Prevent CPU blocking
         logger.info("ML Engine Initialized: Async IsolationForest + Z-Score")
 
     def _extract_features(self, requirements: List[Dict]) -> np.ndarray:
@@ -38,7 +38,7 @@ class EdgeCaseDetector:
                 text.count(",") + text.count("and"),     # Complexity: Logic Density
                 1 if "must" in text.lower() else 0,      # Strictness
                 1 if "user" in text.lower() else 0,      # Interaction
-                1 if "error" in text.lower() or "fail" in text.lower() else 0 # Negative path
+                1 if "error" in text.lower() or "fail" in text.lower() else 0  # Negative path
             ])
         return np.array(features)
 
@@ -62,19 +62,23 @@ class EdgeCaseDetector:
             is_physics = physics_anomalies[i]
             
             sources = []
-            if is_ml: sources.append("Statistical_Outlier")
-            if is_physics: sources.append("Physics_ZScore_Deviation")
+            if is_ml:
+                sources.append("Statistical_Outlier")
+            if is_physics:
+                sources.append("Physics_ZScore_Deviation")
 
             risk = "NORMAL"
-            if is_ml and is_physics: risk = "CRITICAL"
-            elif is_ml or is_physics: risk = "HIGH"
+            if is_ml and is_physics:
+                risk = "CRITICAL"
+            elif is_ml or is_physics:
+                risk = "HIGH"
 
             results.append(RequirementAnalysis(
                 id=req.get("id", f"REQ_{i}"),
                 text=req.get("text", ""),
                 is_edge_case=is_ml or is_physics,
                 risk_level=risk,
-                complexity_score=float(X[i, 0]), # Use length as proxy for complexity
+                complexity_score=float(X[i, 0]),  # Use length as proxy for complexity
                 risk_sources=sources
             ))
             
