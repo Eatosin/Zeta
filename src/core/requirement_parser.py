@@ -6,7 +6,7 @@ from pypdf import PdfReader
 from loguru import logger
 from pydantic import BaseModel, Field
 
-# SOTA Data Structure for Documents
+# Data Structure for Documents
 class ParsedDocument(BaseModel):
     filename: str
     content: str
