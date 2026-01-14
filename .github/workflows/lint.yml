@@ -23,8 +23,8 @@ jobs:
       - name: Install Linting Tools
         # 'ruff' is the SOTA linter in 2026 (Replaces Black/Isort/Flake8)
         run: |
-          pip install ruff mypy types-requests types-PyYAML
-
+          pip install ruff mypy types-requests types-PyYAML types-aiofiles
+          
       - name: Check Logic Errors (Ruff)
         run: ruff check .
 
