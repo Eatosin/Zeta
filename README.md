@@ -9,7 +9,7 @@
 [![Scikit-Learn](https://img.shields.io/badge/Physics-Scikit_Learn-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white)](https://scikit-learn.org)
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com)
 
-[Live Demo](https://huggingface.co/spaces/EATosin/TestForge-AI) • [Engineering Log](docs/ENGINEERING_LOG.md) • [User Guide](docs/USER_GUIDE.md) • [Architecture](docs/architecture.md)
+[Live Demo](https://huggingface.co/spaces/EATosin/Zeta) • [Engineering Log](docs/ENGINEERING_LOG.md) • [User Guide](docs/USER_GUIDE.md) • [Architecture](docs/architecture.md)
 
 </div>
 
