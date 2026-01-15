@@ -1,3 +1,4 @@
+
 import numpy as np
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
@@ -7,7 +8,6 @@ from loguru import logger
 from pydantic import BaseModel
 from src.ml.anomaly_detection import AnomalyDetector
 
-# --- DATA MODELS ---
 class RequirementAnalysis(BaseModel):
     id: str
     text: str
@@ -17,83 +17,58 @@ class RequirementAnalysis(BaseModel):
     risk_sources: List[str]
 
 class EdgeCaseDetector:
-    """
-    Async Physics-Informed Anomaly Detector.
-    Offloads heavy CPU compute to a separate thread pool to keep FastAPI responsive.
-    """
-
     def __init__(self, contamination: float = 0.1):
         self.ml_model = IsolationForest(contamination=contamination, random_state=42)
         self.physics_engine = AnomalyDetector(threshold=2.5)
-        self.executor = ThreadPoolExecutor(max_workers=4)  # Prevent CPU blocking
-        logger.info("ML Engine Initialized: Async IsolationForest + Z-Score")
+        self.executor = ThreadPoolExecutor(max_workers=4)
 
     def _extract_features(self, requirements: List[Dict]) -> np.ndarray:
-        """Internal helper to convert text to vectors."""
         features = []
         for req in requirements:
             text = req.get("text", "")
             features.append([
-                len(text),                               # Complexity: Length
-                text.count(",") + text.count("and"),     # Complexity: Logic Density
-                1 if "must" in text.lower() else 0,      # Strictness
-                1 if "user" in text.lower() else 0,      # Interaction
-                1 if "error" in text.lower() or "fail" in text.lower() else 0  # Negative path
+                len(text),
+                text.count(",") + text.count("and"),
+                1 if "must" in text.lower() else 0,
+                1 if "user" in text.lower() else 0,
+                1 if "error" in text.lower() else 0
             ])
-        return np.array(features)
+        return np.array(features, dtype=float)
+
+    def _sanitize(self, value):
+        if hasattr(value, "item"): return value.item()
+        if isinstance(value, list) and len(value) == 1: return value[0]
+        return value
 
     def _analyze_sync(self, requirements: List[Dict]) -> List[RequirementAnalysis]:
-        """Synchronous core logic (CPU bound)."""
-        if not requirements:
+        if not requirements: return []
+        try:
+            X = self._extract_features(requirements)
+            ml_predictions = self.ml_model.fit_predict(X).tolist() # FIX: tolist()
+            physics_anomalies = self.physics_engine.detect(X[:, 0].tolist()) # FIX: tolist()
+
+            results = []
+            for i, req in enumerate(requirements):
+                is_ml = (ml_predictions[i] == -1)
+                is_phys = bool(physics_anomalies[i])
+                
+                risk = "NORMAL"
+                if is_ml and is_phys: risk = "CRITICAL"
+                elif is_ml or is_phys: risk = "HIGH"
+
+                results.append(RequirementAnalysis(
+                    id=req.get("id", f"REQ_{i}"),
+                    text=req.get("text", ""),
+                    is_edge_case=is_ml or is_phys,
+                    risk_level=risk,
+                    complexity_score=float(X[i][0]),
+                    risk_sources=[]
+                ))
+            return results
+        except Exception as e:
+            logger.error(f"ML Error: {e}")
             return []
 
-        # 1. Feature Extraction
-        X = self._extract_features(requirements)
-        lengths = X[:, 0]
-
-        # 2. Run Models
-        ml_predictions = self.ml_model.fit_predict(X)
-        physics_anomalies = self.physics_engine.detect(lengths)
-
-        # 3. Synthesize Results into Pydantic Models
-        results = []
-        for i, req in enumerate(requirements):
-            is_ml = ml_predictions[i] == -1
-            is_physics = physics_anomalies[i]
-            
-            sources = []
-            if is_ml:
-                sources.append("Statistical_Outlier")
-            if is_physics:
-                sources.append("Physics_ZScore_Deviation")
-
-            risk = "NORMAL"
-            if is_ml and is_physics:
-                risk = "CRITICAL"
-            elif is_ml or is_physics:
-                risk = "HIGH"
-
-            results.append(RequirementAnalysis(
-                id=req.get("id", f"REQ_{i}"),
-                text=req.get("text", ""),
-                is_edge_case=is_ml or is_physics,
-                risk_level=risk,
-                complexity_score=float(X[i, 0]),  # Use length as proxy for complexity
-                risk_sources=sources
-            ))
-            
-        return results
-
     async def analyze_complexity(self, requirements: List[Dict]) -> List[RequirementAnalysis]:
-        """
-        Async wrapper. Offloads the heavy lifting to a thread pool.
-        This ensures the API never freezes while calculating Z-Scores.
-        """
-        logger.info(f"Analyzing {len(requirements)} requirements for Edge Cases...")
         loop = asyncio.get_running_loop()
-        # Run CPU-bound task in executor
-        return await loop.run_in_executor(
-            self.executor, 
-            self._analyze_sync, 
-            requirements
-        )
+        return await loop.run_in_executor(self.executor, self._analyze_sync, requirements)

@@ -1,38 +1,24 @@
-# Core Framework
-fastapi>=0.109.0
-uvicorn[standard]>=0.27.0
-pydantic>=2.5.3
-python-multipart
-
-# UI
-streamlit>=1.32.0
+fastapi
+uvicorn
+pydantic
+streamlit
 altair
-
-# LLM & AI
 google-generativeai
 python-dotenv
 langchain-core
 jinja2
-
-# ML & Physics Engine
 scikit-learn
 pandas
 numpy
 scipy
 loguru
-
-# Document Processing
 pypdf
 python-docx
 aiofiles
 python-magic
-
-# Utilities
 requests
 pyyaml
 black
-
-# Testing
 pytest
 pytest-asyncio
 httpx
