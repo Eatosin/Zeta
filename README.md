@@ -14,7 +14,7 @@
 
 <!-- HERO BANNER -->
 <a href="https://huggingface.co/spaces/EATosin/TestForge-AI">
-  <img src="assets/zeta_hero.png" width="100%" alt="Zeta Architecture" style="border-radius: 10px; box-shadow: 0px 0px 20px rgba(0, 255, 255, 0.2); border: 1px solid #30363d;">
+  <img src="assets/Zeta_hero.png" width="100%" alt="Zeta Architecture" style="border-radius: 10px; box-shadow: 0px 0px 20px rgba(0, 255, 255, 0.2); border: 1px solid #30363d;">
 </a>
 
 <br/><br/>
