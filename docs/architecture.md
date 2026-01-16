@@ -53,7 +53,7 @@ Zeta-AI/
 
 ## 🏗️ System Architecture
 
-TestForge runs as a **Hybrid Microservice**. The FastAPI backend handles heavy compute (ML/LLM), while Streamlit handles User Interaction. Both run inside a single Docker container for easy deployment.
+Zeta runs as a **Hybrid Microservice**. The FastAPI backend handles heavy compute (ML/LLM), while Streamlit handles User Interaction. Both run inside a single Docker container for easy deployment.
 
 ```mermaid
 graph TD
